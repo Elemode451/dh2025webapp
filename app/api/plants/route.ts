@@ -24,12 +24,12 @@ export async function GET(req: Request) {
   });
 
   if (existing) {
-    console.log("✅ Found in DB:", scientificName);
+    console.log("Found in DB:", scientificName);
     return NextResponse.json(existing);
   }
 
   // 2️. Query Gemini if not in DB
-  console.log("🔍 Fetching from Gemini:", scientificName);
+  console.log("Fetching from Gemini:", scientificName);
   const info = await fetchPlantInfo(scientificName);
 
   // 3️. Save to DB
