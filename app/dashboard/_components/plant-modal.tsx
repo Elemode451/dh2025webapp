@@ -92,7 +92,7 @@ export function PlantModal({ plant, onClose }: PlantModalProps) {
         throw new Error("No message returned");
       }
 
-      setMessages((current) => [...current, data.message]);
+      setMessages((current) => [...current, data.message!]);
     } catch (err) {
       console.error(err);
       setError("Your plant got a little shy. Try again in a moment.");

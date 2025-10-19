@@ -49,7 +49,7 @@ function getMoistureRingStyle(level?: number): CSSProperties {
   } satisfies CSSProperties;
 }
 
-function formatLastWatered(timestamp?: number) {
+function formatLastWatered(timestamp?: number | null) {
   if (!timestamp) {
     return null;
   }
@@ -303,8 +303,8 @@ export function PlantGallery({ plants, userId }: PlantGalleryProps) {
 
   function renderPlantCard(
     plant: Plant,
-    moisture?: number,
-    lastWateredAt?: number,
+    moisture?: number | null,
+    lastWateredAt?: number | null,
   ) {
     const hasMoisture = typeof moisture === "number" && !Number.isNaN(moisture);
     const moisturePercent = hasMoisture

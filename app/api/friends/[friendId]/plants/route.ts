@@ -5,7 +5,7 @@ import { prisma } from "@/lib/prisma";
 
 export async function GET(
   _req: Request,
-  context: { params: { friendId: string } },
+  context: { params: Promise<{ friendId: string }> },
 ) {
   const session = await auth();
 
@@ -14,7 +14,8 @@ export async function GET(
   }
 
   const currentUserId = session.user.phoneNumber;
-  const friendId = decodeURIComponent(context.params.friendId);
+  const { friendId: rawFriendId } = await context.params;
+  const friendId = decodeURIComponent(rawFriendId);
 
   if (!friendId) {
     return NextResponse.json({ error: "Friend ID required" }, { status: 400 });
@@ -22,7 +23,7 @@ export async function GET(
 
   const relationship = await prisma.user.findUnique({
     where: { phoneNumber: currentUserId },
-    select: {
+    include: {
       friends: {
         where: { phoneNumber: friendId },
         select: { phoneNumber: true },

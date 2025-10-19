@@ -63,7 +63,7 @@ const globalInfoSchema = z
 const telemetryPayloadSchema = z.object({
   podId: z.string().min(1, "podId is required"),
   at: z.number().optional(),
-  plant_info: z.record(telemetryReadingSchema).optional(),
+  plant_info: z.record(z.string(), telemetryReadingSchema).optional(),
   global_info: globalInfoSchema.optional(),
 });
 
