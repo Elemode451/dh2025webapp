@@ -11,15 +11,11 @@ type SidebarProps = {
 
 export function Sidebar({ activeId = "dashboard" }: SidebarProps) {
   return (
-    <aside className="relative flex h-full flex-col justify-between overflow-hidden bg-gradient-to-b from-[#111827] via-[var(--sidebar)] to-[#060606] px-6 py-8 text-white">
-      <div className="flex flex-col items-center gap-10">
-        <div className="text-center">
-          <div className="text-4xl">🌿</div>
-          <p className="mt-3 text-xs uppercase tracking-[0.4em] text-white/40">Greenroom</p>
-          <p className="mt-1 text-base font-semibold text-white">Plant Portal</p>
-        </div>
+    <aside className="relative flex h-full flex-col items-center justify-between overflow-hidden bg-gradient-to-b from-[#111827] via-[var(--sidebar)] to-[#060606] py-8 text-white">
+      <div className="flex flex-col items-center gap-8">
+        <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-white/10 text-3xl shadow-lg">🌿</div>
 
-        <nav className="flex w-full flex-col gap-3">
+        <nav className="flex flex-col items-center gap-4">
           {actions.map((item) => {
             const isActive = item.id === activeId;
 
@@ -28,31 +24,31 @@ export function Sidebar({ activeId = "dashboard" }: SidebarProps) {
                 key={item.id}
                 type="button"
                 aria-label={item.label}
-                className={`group flex flex-col items-center gap-2 rounded-2xl px-4 py-3 text-center transition-all duration-200 ease-out focus-visible:ring-2 focus-visible:ring-[var(--accent)] focus-visible:ring-offset-2 focus-visible:ring-offset-transparent ${
+                className={`group relative flex h-14 w-14 items-center justify-center rounded-2xl transition-all duration-200 focus-visible:ring-2 focus-visible:ring-[var(--accent)] focus-visible:ring-offset-2 focus-visible:ring-offset-transparent ${
                   isActive
-                    ? "bg-white/10 shadow-[0_10px_30px_rgba(57,211,83,0.22)]"
-                    : "bg-white/5 hover:bg-white/10 hover:text-white"
+                    ? "bg-white/15 shadow-[0_10px_30px_rgba(57,211,83,0.25)]"
+                    : "bg-white/5 hover:bg-white/10"
                 }`}
               >
                 <span
-                  className={`flex h-12 w-12 items-center justify-center rounded-xl text-2xl transition-transform duration-200 ${
-                    isActive ? "scale-105" : "group-hover:scale-105"
+                  className={`text-2xl transition-transform duration-200 ${
+                    isActive ? "scale-105" : "group-hover:scale-110"
                   }`}
                 >
                   {item.icon}
                 </span>
-                <span className="text-sm font-medium text-white/80">{item.label}</span>
+
+                <span className="pointer-events-none absolute left-[calc(100%+12px)] top-1/2 min-w-[120px] -translate-y-1/2 translate-x-3 rounded-xl border border-white/10 bg-black/60 px-3 py-2 text-sm font-medium text-white/80 opacity-0 shadow-lg backdrop-blur transition-all duration-200 group-hover:translate-x-0 group-hover:opacity-100">
+                  {item.label}
+                </span>
               </button>
             );
           })}
         </nav>
       </div>
 
-      <div className="rounded-2xl border border-white/10 bg-white/5 p-5 text-center text-xs text-white/70 backdrop-blur">
-        <p className="font-semibold text-white">Happy plants, happy people.</p>
-        <p className="mt-2 leading-relaxed">
-          Give them a little water, a little light, and they will shower you with leafy gratitude.
-        </p>
+      <div className="flex h-12 w-12 items-center justify-center rounded-full border border-white/10 text-lg text-white/60">
+        ☀️
       </div>
     </aside>
   );

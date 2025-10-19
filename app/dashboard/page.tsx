@@ -1,39 +1,11 @@
 import { auth } from '@/auth';
 import { redirect } from 'next/navigation';
 
+import { prisma } from '@/lib/prisma';
+
 import { Sidebar } from './_components/sidebar';
 import { TopBar } from './_components/top-bar';
-import { PlantGallery } from './_components/plant-gallery';
-
-const samplePlants = [
-  {
-    id: '1',
-    plantName: 'Mossy',
-    species: {
-      scientificName: 'Monstera deliciosa',
-      name: 'Swiss Cheese Plant',
-    },
-    emoji: '🪴',
-  },
-  {
-    id: '2',
-    plantName: 'Sunny',
-    species: {
-      scientificName: 'Epipremnum aureum',
-      name: "Devil's Ivy",
-    },
-    emoji: '🌿',
-  },
-  {
-    id: '3',
-    plantName: 'Fernanda',
-    species: {
-      scientificName: 'Nephrolepis exaltata',
-      name: 'Boston Fern',
-    },
-    emoji: '🌱',
-  },
-];
+import { PlantGallery, type Plant } from './_components/plant-gallery';
 
 export default async function DashboardPage() {
   const session = await auth();
@@ -43,6 +15,22 @@ export default async function DashboardPage() {
   }
 
   const username = session.user.name ?? 'friend';
+
+  const plantsFromDb = await prisma.plants.findMany({
+    where: { ownerId: session.user.phoneNumber },
+    include: { species: true },
+    orderBy: { plantName: 'asc' },
+  });
+
+  const plants: Plant[] = plantsFromDb.map((plant) => ({
+    id: plant.id,
+    plantName: plant.plantName,
+    emoji: null,
+    species: {
+      scientificName: plant.species.scientificName,
+      name: plant.species.name,
+    },
+  }));
 
   return (
     <div className="min-h-screen bg-[var(--bg)] text-[var(--ink)]">
@@ -62,7 +50,7 @@ export default async function DashboardPage() {
               </div>
             </header>
 
-            <PlantGallery plants={samplePlants} />
+            <PlantGallery plants={plants} />
           </section>
         </main>
       </div>

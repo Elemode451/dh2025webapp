@@ -7,7 +7,7 @@ import type { PlantChatMessage } from "@/lib/gemini";
 type Plant = {
   id: string;
   plantName: string;
-  emoji: string;
+  emoji?: string | null;
   species: {
     scientificName: string;
     name: string;
@@ -22,10 +22,11 @@ type PlantModalProps = {
 type Message = PlantChatMessage;
 
 export function PlantModal({ plant, onClose }: PlantModalProps) {
+  const displayEmoji = plant.emoji ?? "🪴";
   const [messages, setMessages] = useState<Message[]>(() => [
     {
       role: "assistant",
-      content: `Hi there! I'm ${plant.plantName} ${plant.emoji} and I'm feeling leafy and bright today. How's your world outside the pot?`,
+      content: `Hi there! I'm ${plant.plantName} ${displayEmoji} and I'm feeling leafy and bright today. How's your world outside the pot?`,
     },
   ]);
   const [input, setInput] = useState("");
@@ -75,7 +76,7 @@ export function PlantModal({ plant, onClose }: PlantModalProps) {
         },
         body: JSON.stringify({
           plantName: plant.plantName,
-          emoji: plant.emoji,
+          emoji: displayEmoji,
           messages: nextMessages,
         }),
       });
@@ -121,7 +122,7 @@ export function PlantModal({ plant, onClose }: PlantModalProps) {
 
         <div className="flex flex-col gap-6 px-6 py-6">
           <div className="mx-auto flex h-28 w-28 items-center justify-center rounded-full bg-gradient-to-br from-[var(--accent)]/20 via-white/40 to-white/10 text-5xl">
-            {plant.emoji}
+            {displayEmoji}
           </div>
           <p className="text-center text-sm text-[var(--muted)]">
             This happy plant loves hearing about your day. Share your thoughts and it will respond with leafy cheer.

@@ -3,11 +3,12 @@
 import { useState } from "react";
 
 import { PlantModal } from "./plant-modal";
+import { AddPlantModal } from "./add-plant-modal";
 
-type Plant = {
+export type Plant = {
   id: string;
   plantName: string;
-  emoji: string;
+  emoji?: string | null;
   species: {
     scientificName: string;
     name: string;
@@ -20,11 +21,17 @@ type PlantGalleryProps = {
 
 export function PlantGallery({ plants }: PlantGalleryProps) {
   const [activePlant, setActivePlant] = useState<Plant | null>(null);
+  const [items, setItems] = useState<Plant[]>(plants);
+  const [isAddModalOpen, setIsAddModalOpen] = useState(false);
+
+  function handlePlantCreated(plant: Plant) {
+    setItems((current) => [...current, plant]);
+  }
 
   return (
     <>
       <div className="grid gap-4 [grid-template-columns:repeat(auto-fill,minmax(200px,1fr))]">
-        {plants.map((plant) => (
+        {items.map((plant) => (
           <button
             key={plant.id}
             type="button"
@@ -34,7 +41,7 @@ export function PlantGallery({ plants }: PlantGalleryProps) {
             <div className="relative flex h-[120px] w-[120px] items-center justify-center">
               <span className="absolute inset-0 rounded-full border-2 border-[var(--moisture)] opacity-80 transition-transform duration-200 group-hover:scale-[1.03]"></span>
               <span className="relative flex h-[104px] w-[104px] items-center justify-center rounded-full bg-[var(--bg)] text-5xl">
-                {plant.emoji}
+                {plant.emoji ?? "🪴"}
               </span>
             </div>
             <div className="space-y-1">
@@ -50,6 +57,7 @@ export function PlantGallery({ plants }: PlantGalleryProps) {
 
         <button
           type="button"
+          onClick={() => setIsAddModalOpen(true)}
           className="flex h-full min-h-[240px] flex-col items-center justify-center gap-3 rounded-[var(--card-radius)] border border-dashed border-[var(--border)] bg-[var(--panel)] p-5 text-center text-[var(--muted)] shadow-[var(--shadow-card)] transition-all duration-200 ease-out hover:translate-y-[1px] hover:shadow-[var(--shadow-card-hover)] hover:text-[var(--ink)] focus-visible:ring-2 focus-visible:ring-[var(--accent)] focus-visible:ring-offset-2 focus-visible:ring-offset-[var(--panel)]"
         >
           <span className="text-3xl">➕</span>
@@ -61,6 +69,12 @@ export function PlantGallery({ plants }: PlantGalleryProps) {
       </div>
 
       {activePlant ? <PlantModal plant={activePlant} onClose={() => setActivePlant(null)} /> : null}
+      {isAddModalOpen ? (
+        <AddPlantModal
+          onClose={() => setIsAddModalOpen(false)}
+          onPlantCreated={handlePlantCreated}
+        />
+      ) : null}
     </>
   );
 }
