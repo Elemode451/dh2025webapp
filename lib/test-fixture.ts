@@ -2,19 +2,20 @@ import { prisma } from "@/lib/prisma";
 import { applyPodTelemetry } from "@/lib/pod-state";
 
 // TEST FIXTURE: remove this file once real telemetry/dev seeding is in place.
-const TEST_FIXTURE_USER_PHONE = "+15555550123";
-const TEST_FIXTURE_USER_NAME = "Test Gardener";
-const TEST_FIXTURE_PASSWORD_HASH = "$2b$10$UXb0dqCzbWAatRF2Mfcf9OCwTMCQM/w0dLtHs3cnkbIOPUqpyjwvG"; // bcrypt for PlantBuddy!1
+const TEST_FIXTURE_USER_PHONE = "+15555550123"; // TEST VALUE: seeded dev user phone
+const TEST_FIXTURE_USER_NAME = "Test Gardener"; // TEST VALUE: seeded dev user display name
+const TEST_FIXTURE_PASSWORD_HASH = "$2b$10$UXb0dqCzbWAatRF2Mfcf9OCwTMCQM/w0dLtHs3cnkbIOPUqpyjwvG"; // TEST VALUE: bcrypt for PlantBuddy!1
 
-const TEST_FIXTURE_SPECIES_ID = "fixture.species.remove.me";
-const TEST_FIXTURE_SPECIES_NAME = "Demo Daisy (REMOVE)";
-const TEST_FIXTURE_SPECIES_IDEAL_MOISTURE = "45-60%";
+const TEST_FIXTURE_SPECIES_ID = "fixture.species.remove.me"; // TEST VALUE: dev species identifier
+const TEST_FIXTURE_SPECIES_NAME = "Demo Daisy (REMOVE)"; // TEST VALUE: dev species name
+const TEST_FIXTURE_SPECIES_IDEAL_MOISTURE = "45-60%"; // TEST VALUE: dev species ideal moisture band
 
-const TEST_FIXTURE_POD_ID = "pod-demo-fixture";
-const TEST_FIXTURE_PLANT_ID = "11111111-2222-3333-4444-555555555555";
-const TEST_FIXTURE_PLANT_NAME = "Fixture Fern (REMOVE)";
+const TEST_FIXTURE_POD_ID = "pod-demo-fixture"; // TEST VALUE: dev pod id
+const TEST_FIXTURE_PLANT_ID = "11111111-2222-3333-4444-555555555555"; // TEST VALUE: dev plant id
+const TEST_FIXTURE_PLANT_NAME = "Fixture Fern (REMOVE)"; // TEST VALUE: dev plant name
 
 let pendingProvision: Promise<void> | null = null;
+let telemetryInterval: NodeJS.Timeout | null = null;
 
 export type TestFixtureDetails = {
   userPhone: string;
@@ -86,21 +87,47 @@ async function provisionFixture() {
     },
   });
 
+  seedTestTelemetry();
+  startTelemetryLoop();
+}
+
+function startTelemetryLoop() {
+  if (telemetryInterval) {
+    return;
+  }
+
+  telemetryInterval = setInterval(() => {
+    seedTestTelemetry();
+  }, 15_000); // TEST VALUE: refresh interval for random telemetry
+}
+
+function seedTestTelemetry() {
   const now = Date.now();
-  const lastWateredMs = now - 45 * 60 * 1000; // 45 minutes ago
+  const seconds = Math.floor(now / 1000);
+
+  const humidityPercent = randomInRange(40, 75); // TEST VALUE: dev humidity window
+  const tempC = randomInRange(20, 27); // TEST VALUE: dev temperature window
+  const moistureRatio = randomInRange(0.35, 0.65); // TEST VALUE: dev moisture window
+
+  const minutesSinceWater = randomInRange(15, 120); // TEST VALUE: time since watering range
+  const lastWateredSeconds = seconds - Math.floor(minutesSinceWater * 60);
 
   applyPodTelemetry({
     podId: TEST_FIXTURE_POD_ID,
-    at: Math.floor(now / 1000),
+    at: seconds,
     global_info: {
-      avgTempC: 22.6,
-      avgHumidity: 0.58,
+      avgTempC: Number(tempC.toFixed(1)),
+      avgHumidity: Number((humidityPercent / 100).toFixed(2)),
     },
     plant_info: {
       [TEST_FIXTURE_PLANT_ID]: {
-        moisture: 0.46,
-        lastWateredAt: Math.floor(lastWateredMs / 1000),
+        moisture: Number(moistureRatio.toFixed(2)),
+        lastWateredAt: lastWateredSeconds,
       },
     },
   });
+}
+
+function randomInRange(min: number, max: number) {
+  return Math.random() * (max - min) + min;
 }
