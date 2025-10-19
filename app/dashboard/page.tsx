@@ -2,7 +2,12 @@ import { auth } from '@/auth';
 import { redirect } from 'next/navigation';
 
 import { prisma } from '@/lib/prisma';
-import { ensureDevTestingPlantFixture } from '@/lib/test-fixture';
+import {
+  ensureDevTestingPlantFixture,
+  isTestFixtureEnabled,
+} from '@/lib/test-fixture';
+
+import { TestFixtureToggle } from './_components/test-fixture-toggle';
 
 import { PlantGallery, type Plant } from './_components/plant-gallery';
 
@@ -15,7 +20,11 @@ export default async function DashboardPage() {
 
   const userId = session.user.phoneNumber;
 
-  await ensureDevTestingPlantFixture(userId);
+  const fixtureEnabled = isTestFixtureEnabled();
+
+  if (fixtureEnabled) {
+    await ensureDevTestingPlantFixture(userId);
+  }
 
   const plantsFromDb = await prisma.plants.findMany({
     where: { ownerId: userId },
@@ -42,6 +51,10 @@ export default async function DashboardPage() {
           A quick peek at every leaf in your care...
         </p>
       </header>
+
+      {process.env.NODE_ENV !== 'production' ? (
+        <TestFixtureToggle initialEnabled={fixtureEnabled} />
+      ) : null}
 
       <PlantGallery plants={plants} userId={userId} />
     </section>
