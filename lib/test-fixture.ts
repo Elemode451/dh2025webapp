@@ -1,5 +1,7 @@
 import { prisma } from "@/lib/prisma";
 import { applyPodTelemetry } from "@/lib/pod-state";
+import { handlePlantTelemetry } from "@/lib/telemetry";
+import { WateringAlertStatus } from "@prisma/client";
 
 // TEST FIXTURE: remove this file once real telemetry/dev seeding is in place.
 const TEST_FIXTURE_USER_PHONE = "+15555550123"; // TEST VALUE: seeded dev user phone
@@ -87,7 +89,7 @@ async function provisionFixture() {
     },
   });
 
-  seedTestTelemetry();
+  await seedTestTelemetry();
   startTelemetryLoop();
 }
 
@@ -97,37 +99,75 @@ function startTelemetryLoop() {
   }
 
   telemetryInterval = setInterval(() => {
-    seedTestTelemetry();
+    void seedTestTelemetry();
   }, 15_000); // TEST VALUE: refresh interval for random telemetry
 }
 
-function seedTestTelemetry() {
+async function seedTestTelemetry() {
   const now = Date.now();
   const seconds = Math.floor(now / 1000);
 
   const humidityPercent = randomInRange(40, 75); // TEST VALUE: dev humidity window
   const tempC = randomInRange(20, 27); // TEST VALUE: dev temperature window
-  const moistureRatio = randomInRange(0.35, 0.65); // TEST VALUE: dev moisture window
+  const moistureRatio = randomInRange(0.05, 0.12); // TEST VALUE: force critical moisture
 
-  const minutesSinceWater = randomInRange(15, 120); // TEST VALUE: time since watering range
+  const minutesSinceWater = randomInRange(240, 720); // TEST VALUE: simulate long drought
   const lastWateredSeconds = seconds - Math.floor(minutesSinceWater * 60);
+
+  const roundedMoisture = Number(moistureRatio.toFixed(2));
+  const roundedHumidity = Number((humidityPercent / 100).toFixed(2));
+  const roundedTemp = Number(tempC.toFixed(1));
 
   applyPodTelemetry({
     podId: TEST_FIXTURE_POD_ID,
     at: seconds,
     global_info: {
-      avgTempC: Number(tempC.toFixed(1)),
-      avgHumidity: Number((humidityPercent / 100).toFixed(2)),
+      avgTempC: roundedTemp,
+      avgHumidity: roundedHumidity,
     },
     plant_info: {
       [TEST_FIXTURE_PLANT_ID]: {
-        moisture: Number(moistureRatio.toFixed(2)),
+        moisture: roundedMoisture,
         lastWateredAt: lastWateredSeconds,
       },
     },
+  });
+
+  await triggerCriticalAlert({
+    moisture: roundedMoisture,
+    measurementTimestampMs: now,
   });
 }
 
 function randomInRange(min: number, max: number) {
   return Math.random() * (max - min) + min;
+}
+
+async function triggerCriticalAlert({
+  moisture,
+  measurementTimestampMs,
+}: {
+  moisture: number;
+  measurementTimestampMs: number;
+}) {
+  try {
+    await prisma.wateringAlert.updateMany({
+      where: {
+        plantId: TEST_FIXTURE_PLANT_ID,
+        status: WateringAlertStatus.PENDING,
+      },
+      data: {
+        status: WateringAlertStatus.MISSED,
+      },
+    });
+
+    await handlePlantTelemetry({
+      plantId: TEST_FIXTURE_PLANT_ID,
+      moisture,
+      sensorTimestamp: new Date(measurementTimestampMs),
+      lastWateredAt: null,
+    });
+  } catch (error) {
+    console.error("Failed to trigger test watering alert", error);
+  }
 }
