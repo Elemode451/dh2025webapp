@@ -1,14 +1,18 @@
 import { signOut } from '@/auth';
+import { Pacifico } from "next/font/google";
 
 type TopBarProps = {
   username: string;
 };
+const pacifico = Pacifico({ weight: "400", subsets: ["latin"] });
 
 export async function TopBar({ username }: TopBarProps) {
   return (
     <header className="h-14 bg-[var(--topbar)] text-white">
       <div className="mx-auto flex h-full max-w-6xl items-center justify-between px-6">
-        <span className="text-lg font-semibold tracking-tight">🌱 Sprout</span>
+        <span className={`${pacifico.className} text-2xl text-emerald-300 drop-shadow`}>
+          🌱 Sprout
+        </span>
         <div className="flex items-center gap-4 text-sm">
           <span className="text-white/80">welcome back, {username}!</span>
           <form

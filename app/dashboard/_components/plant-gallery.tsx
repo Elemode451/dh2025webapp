@@ -390,10 +390,6 @@ export function PlantGallery({ plants, userId }: PlantGalleryProps) {
     <>
       <div className="mb-6 flex flex-wrap items-center justify-between gap-4">
         <div className="space-y-1">
-          <h2 className="text-lg font-semibold text-[var(--ink)]">Organize your pods</h2>
-          <p className="text-sm text-[var(--muted)]">
-            {isSelectionMode ? "Click plants to add them to your new pod, then confirm." : "Group plants into pods to stream their telemetry together."}
-          </p>
         </div>
         <div className="flex items-center gap-3">
           {isSelectionMode ? (
@@ -450,7 +446,6 @@ export function PlantGallery({ plants, userId }: PlantGalleryProps) {
               <header className="mb-4 flex flex-wrap items-center justify-between gap-4">
                 <div>
                   <h2 className="text-lg font-semibold text-[var(--ink)]">Pod {index + 1}</h2>
-                  <p className="text-xs font-mono text-[var(--muted)]">{pod.id}</p>
                   <p className="text-xs text-[var(--muted)]">{updatedAt ? `Updated ${updatedAt}` : "Waiting for data..."}</p>
                 </div>
                 <div className="flex flex-wrap items-center gap-3 text-xs font-medium text-[var(--ink)]">

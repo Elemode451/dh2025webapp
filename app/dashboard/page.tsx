@@ -43,7 +43,7 @@ export default async function DashboardPage() {
             <div>
               <h1 className="text-2xl font-semibold">Your plants</h1>
               <p className="text-sm text-[var(--muted)]">
-                A quick peek at every leaf in your care. Tap a tile to dive in when the modal arrives.
+                A quick peek at every leaf in your care...
               </p>
             </div>
           </header>
