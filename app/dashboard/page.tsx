@@ -3,7 +3,6 @@ import { redirect } from 'next/navigation';
 
 import { prisma } from '@/lib/prisma';
 
-import { Sidebar } from './_components/sidebar';
 import { TopBar } from './_components/top-bar';
 import { PlantGallery, type Plant } from './_components/plant-gallery';
 
@@ -14,7 +13,8 @@ export default async function DashboardPage() {
     redirect('/login');
   }
 
-  const username = session.user.name ?? 'friend';
+  const user = session.user!;
+  const username = user.name ?? 'friend';
 
   const plantsFromDb = await prisma.plants.findMany({
     where: { ownerId: session.user.phoneNumber },
@@ -30,30 +30,27 @@ export default async function DashboardPage() {
       scientificName: plant.species.scientificName,
       name: plant.species.name,
     },
+    podId: plant.podId,
   }));
 
   return (
     <div className="min-h-screen bg-[var(--bg)] text-[var(--ink)]">
       <TopBar username={username} />
 
-      <div className="grid min-h-[calc(100vh-56px)] grid-cols-[240px_1fr]">
-        <Sidebar activeId="dashboard" />
+      <main className="bg-[var(--bg)] px-6 py-8">
+        <section className="mx-auto max-w-5xl">
+          <header className="mb-6 flex items-center justify-between">
+            <div>
+              <h1 className="text-2xl font-semibold">Your plants</h1>
+              <p className="text-sm text-[var(--muted)]">
+                A quick peek at every leaf in your care...
+              </p>
+            </div>
+          </header>
 
-        <main className="bg-[var(--bg)] px-6 py-8">
-          <section className="mx-auto max-w-5xl">
-            <header className="mb-6 flex items-center justify-between">
-              <div>
-                <h1 className="text-2xl font-semibold">Your plants</h1>
-                <p className="text-sm text-[var(--muted)]">
-                  A quick peek at every leaf in your care. Tap a tile to dive in when the modal arrives.
-                </p>
-              </div>
-            </header>
-
-            <PlantGallery plants={plants} />
-          </section>
-        </main>
-      </div>
+          <PlantGallery plants={plants} userId={user.phoneNumber} />
+        </section>
+      </main>
     </div>
   );
 }

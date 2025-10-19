@@ -1,6 +1,5 @@
 const actions = [
   { id: "dashboard", icon: "📊", label: "Dashboard" },
-  { id: "plants", icon: "🪴", label: "Plants" },
   { id: "pods", icon: "🌡️", label: "Pods" },
   { id: "settings", icon: "⚙️", label: "Settings" },
 ];

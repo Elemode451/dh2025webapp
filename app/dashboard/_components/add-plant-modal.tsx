@@ -67,6 +67,7 @@ export function AddPlantModal({ onClose, onPlantCreated }: AddPlantModalProps) {
           scientificName: data.plant.species.scientificName,
           name: data.plant.species.name,
         },
+        podId: data.plant.podId ?? null,
       });
       onClose();
     } catch (err) {
