@@ -1,4 +1,5 @@
 from fastapi import FastAPI
+from gpiozero import Button
 import asyncio
 import requests
 import time
@@ -18,8 +19,25 @@ app = FastAPI()
 POD_ID = ""
 POST_URL = ""
 
+SENSOR_PIN = 4
+
 # Example list of plant IDs
 PLANT_IDS = ["plant-uuid-1"]
+
+# -----------------------------
+# Setup water sensor
+# -----------------------------
+water_sensor = Button(SENSOR_PIN, pull_up=True)
+
+def on_water_detected():
+    print("Water detected!")
+    post_telemetry(watered=True)  # Immediately post telemetry
+
+def on_dry():
+    print("Dry")
+
+water_sensor.when_pressed = on_water_detected
+water_sensor.when_released = on_dry
 
 # -----------------------------
 # Aggregate plant info
