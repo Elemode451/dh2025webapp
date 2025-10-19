@@ -169,7 +169,7 @@ async function triggerCriticalAlert({
       plantId: TEST_FIXTURE_PLANT_ID,
       moisture,
       sensorTimestamp: new Date(measurementTimestampMs),
-      lastWateredAt: null,
+      wateringTimestamp: null,
     });
   } catch (error) {
     console.error("Failed to trigger test watering alert", error);

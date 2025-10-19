@@ -50,7 +50,7 @@ export async function GET(req: Request) {
 
 const telemetryReadingSchema = z.object({
   moisture: z.number().optional(),
-  lastWateredAt: z.number().optional(),
+  watered: z.boolean().optional(),
 });
 
 const globalInfoSchema = z
@@ -74,10 +74,6 @@ const KY013_MAX_TEMP_C = 125;
 
 function normalizeToMilliseconds(value: number) {
   return value > 1e11 ? value : value * 1000;
-}
-
-function normalizeToSeconds(value: number) {
-  return value > 1e11 ? Math.floor(value / 1000) : Math.floor(value);
 }
 
 export async function POST(req: Request) {
@@ -119,13 +115,11 @@ export async function POST(req: Request) {
           normalized.moisture = reading.moisture;
         }
 
-        if ("lastWateredAt" in reading) {
-          const asNumber = reading.lastWateredAt;
-          if (typeof asNumber === "number" && !Number.isNaN(asNumber)) {
-            normalized.lastWateredAt = normalizeToSeconds(asNumber);
-          } else {
-            normalized.lastWateredAt = reading.lastWateredAt;
-          }
+        const watered = reading.watered === true;
+        const wateringTimestampMs = watered ? Date.now() : null;
+
+        if (wateringTimestampMs) {
+          normalized.lastWateredAt = Math.floor(wateringTimestampMs / 1000);
         }
 
         if (normalized.moisture !== undefined || normalized.lastWateredAt !== undefined) {
@@ -136,16 +130,12 @@ export async function POST(req: Request) {
           typeof reading.moisture === "number" && !Number.isNaN(reading.moisture)
             ? reading.moisture
             : null;
-        const lastWateredAtMs =
-          typeof reading.lastWateredAt === "number" && !Number.isNaN(reading.lastWateredAt)
-            ? normalizeToMilliseconds(reading.lastWateredAt)
-            : null;
 
         await handlePlantTelemetry({
           plantId,
           moisture,
           sensorTimestamp: new Date(measurementTimestampMs),
-          lastWateredAt: lastWateredAtMs ? new Date(lastWateredAtMs) : null,
+          wateringTimestamp: wateringTimestampMs ? new Date(wateringTimestampMs) : null,
         });
       }),
     );

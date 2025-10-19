@@ -9,7 +9,7 @@ type PlantReading = {
   plantId: string;
   moisture: number | null;
   sensorTimestamp: Date;
-  lastWateredAt: Date | null;
+  wateringTimestamp: Date | null;
 };
 
 export async function handlePlantTelemetry(reading: PlantReading) {
@@ -50,18 +50,18 @@ export async function handlePlantTelemetry(reading: PlantReading) {
     }
   }
 
-  if (reading.lastWateredAt) {
+  if (reading.wateringTimestamp) {
     await prisma.plantTelemetry.create({
       data: {
         plantId: plant.id,
         type: TelemetryType.WATERING,
-        sensorTimestamp: reading.lastWateredAt,
+        sensorTimestamp: reading.wateringTimestamp,
       },
     });
 
     await fulfillMostRecentAlert({
       plantId: plant.id,
-      wateredAt: reading.lastWateredAt,
+      wateredAt: reading.wateringTimestamp,
     });
   }
 }
