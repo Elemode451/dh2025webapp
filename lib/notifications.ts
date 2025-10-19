@@ -9,7 +9,7 @@ type SendWaterAlertParams = {
 function getVonageConfig() {
   const apiKey = process.env.VONAGE_API_KEY;
   const apiSecret = process.env.VONAGE_API_SECRET;
-  const from = process.env.VONAGE_FROM_NUMBER;
+  const from = "Vonage APIs";
 
   if (!apiKey || !apiSecret || !from) {
     console.warn("Vonage credentials are not fully configured. SMS alerts are disabled.");
