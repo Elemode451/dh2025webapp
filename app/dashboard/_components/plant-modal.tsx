@@ -26,7 +26,7 @@ export function PlantModal({ plant, onClose }: PlantModalProps) {
   const [messages, setMessages] = useState<Message[]>(() => [
     {
       role: "assistant",
-      content: `Hi there! I'm ${plant.plantName} ${displayEmoji} and I'm feeling leafy and bright today. How's your world outside the pot?`,
+      content: `Hi there! I'm ${plant.plantName} ${displayEmoji}. Tell me what's growing on in your world!`,
     },
   ]);
   const [input, setInput] = useState("");
@@ -75,6 +75,7 @@ export function PlantModal({ plant, onClose }: PlantModalProps) {
           "Content-Type": "application/json",
         },
         body: JSON.stringify({
+          plantId: plant.id,
           plantName: plant.plantName,
           emoji: displayEmoji,
           messages: nextMessages,

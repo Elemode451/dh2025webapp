@@ -19,6 +19,21 @@ const TEST_FIXTURE_PLANT_NAME = "Fixture Fern (REMOVE)"; // TEST VALUE: dev plan
 let pendingProvision: Promise<void> | null = null;
 let telemetryInterval: NodeJS.Timeout | null = null;
 let fixtureOwnerPhone = DEFAULT_TEST_FIXTURE_USER_PHONE;
+let fixtureEnabled = false;
+
+export function isTestFixtureEnabled() {
+  return fixtureEnabled;
+}
+
+export async function enableTestFixture(ownerPhoneNumber?: string) {
+  if (process.env.NODE_ENV === "production") {
+    return;
+  }
+
+  fixtureEnabled = true;
+
+  await ensureDevTestingPlantFixture(ownerPhoneNumber);
+}
 
 export type TestFixtureDetails = {
   userPhone: string;
@@ -35,7 +50,7 @@ export const TEST_FIXTURE_DETAILS: TestFixtureDetails = {
 };
 
 export async function ensureDevTestingPlantFixture(ownerPhoneNumber?: string) {
-  if (process.env.NODE_ENV === "production") {
+  if (process.env.NODE_ENV === "production" || !fixtureEnabled) {
     return;
   }
 

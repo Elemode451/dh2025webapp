@@ -1,10 +1,23 @@
 // lib/notifications.ts
 import { Vonage } from '@vonage/server-sdk'
 
+import { generatePlantAlertMessage } from '@/lib/gemini'
+import { resolvePlantMood } from '@/lib/plant-mood'
+
 type SendWaterAlertParams = {
+  plantId: string
   to: string
   plantName: string
   moisturePercent: number | null
+}
+
+type VonageSmsMessage = {
+  status: string
+  ['error-text']?: string
+}
+
+type VonageSmsResponse = {
+  messages?: VonageSmsMessage[]
 }
 
 function getVonageConfig() {
@@ -29,11 +42,21 @@ function normalizeNumber(num: string): string {
   return '+' + clean
 }
 
-export async function sendWaterAlert({ to, plantName, moisturePercent }: SendWaterAlertParams) {
+function fallbackAlertMessage(plantName: string, moisturePercent: number | null) {
+  const parts = [`Hey! ${plantName} is feeling thirsty.`]
+
+  if (typeof moisturePercent === 'number' && !Number.isNaN(moisturePercent)) {
+    parts.push(`Current moisture is around ${moisturePercent}%.`)
+  }
+
+  parts.push('Could you give them a drink?')
+  return parts.join(' ')
+}
+
+export async function sendWaterAlert({ to, plantId, plantName, moisturePercent }: SendWaterAlertParams) {
   const config = getVonageConfig()
   if (!config) return
 
-  // normalize before validation
   const normalizedTo = to.startsWith('+') ? to : normalizeNumber(to)
 
   if (!isE164(normalizedTo)) {
@@ -41,13 +64,24 @@ export async function sendWaterAlert({ to, plantName, moisturePercent }: SendWat
     return
   }
 
+  const moistureValue =
+    typeof moisturePercent === 'number' && !Number.isNaN(moisturePercent)
+      ? Math.round(moisturePercent)
+      : null
 
-  const parts = [`Hey! ${plantName} is feeling thirsty.`]
-  if (typeof moisturePercent === 'number' && !Number.isNaN(moisturePercent)) {
-    parts.push(`Current moisture is around ${Math.round(moisturePercent)}%.`)
+  let text: string
+
+  try {
+    const mood = await resolvePlantMood(plantId)
+    text = await generatePlantAlertMessage({
+      plantName,
+      moisturePercent: moistureValue,
+      mood,
+    })
+  } catch (error) {
+    console.error('Falling back to default water alert message', error)
+    text = fallbackAlertMessage(plantName, moistureValue)
   }
-  parts.push('Could you give them a drink?')
-  const text = parts.join(' ')
 
   const vonage = new Vonage({
     apiKey: config.apiKey,
@@ -55,27 +89,38 @@ export async function sendWaterAlert({ to, plantName, moisturePercent }: SendWat
   })
 
   try {
-    const resp = await vonage.sms.send({
+    const resp = (await vonage.sms.send({
       to: normalizedTo,
       from: config.from,
       text,
-    })
+    })) as VonageSmsResponse
 
     console.dir(resp, { depth: null })
 
-    const failed = resp.messages.filter((m: any) => m.status !== '0')
+    const messages = resp.messages ?? []
+    const failed = messages.filter((message) => message.status !== '0')
+
     if (failed.length) {
-      const msg = failed.map((m: any) => m['error-text']).join('; ')
+      const failureText = failed
+        .map((message) => message['error-text'])
+        .filter((value): value is string => typeof value === 'string' && value.length > 0)
+        .join('; ')
+
       console.error('Failed parts:', failed)
-      throw new Error(msg || 'Some SMS messages failed to send')
+      throw new Error(failureText || 'Some SMS messages failed to send')
     }
 
     console.log(`Message sent successfully to ${normalizedTo}`)
     return resp
-  } catch (err: any) {
-    const apiData = err?.cause?.response?.data ?? err?.response?.data
+  } catch (err) {
+    const error = err as {
+      cause?: { response?: { data?: unknown } }
+      response?: { data?: unknown }
+    }
+
+    const apiData = error?.cause?.response?.data ?? error?.response?.data
     console.error('SMS send error:')
-    console.dir(apiData ?? err, { depth: null })
+    console.dir(apiData ?? error, { depth: null })
     throw err
   }
 }

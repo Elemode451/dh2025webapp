@@ -110,6 +110,7 @@ async function maybeTriggerAlert({
   const moisturePercent = Math.max(0, Math.min(1, moisture)) * 100;
 
   await sendWaterAlert({
+    plantId: plantId,
     to: ownerPhone,
     plantName,
     moisturePercent,
