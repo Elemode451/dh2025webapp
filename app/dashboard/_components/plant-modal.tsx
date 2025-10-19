@@ -107,7 +107,6 @@ export function PlantModal({ plant, onClose }: PlantModalProps) {
       <div className="relative z-10 flex w-full max-w-2xl flex-col overflow-hidden rounded-[28px] border border-white/10 bg-[var(--panel)]/95 text-[var(--ink)] shadow-2xl backdrop-blur">
         <header className="flex items-start justify-between gap-6 border-b border-white/10 bg-black/5 px-6 py-5">
           <div>
-            <p className="text-xs uppercase tracking-[0.35em] text-[var(--muted)]">Chat with your plant</p>
             <h2 className="mt-1 text-xl font-semibold text-[var(--ink)]">{plant.plantName}</h2>
             <p className="text-sm text-[var(--muted)]">{subtitle}</p>
           </div>
@@ -125,7 +124,7 @@ export function PlantModal({ plant, onClose }: PlantModalProps) {
             {displayEmoji}
           </div>
           <p className="text-center text-sm text-[var(--muted)]">
-            This happy plant loves hearing about your day. Share your thoughts and it will respond with leafy cheer.
+            Chat with your plant!
           </p>
 
           <div className="flex max-h-[320px] flex-col gap-3 overflow-y-auto rounded-2xl border border-black/10 bg-white/70 p-4 text-sm text-[var(--ink)] shadow-inner">
