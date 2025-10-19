@@ -4,7 +4,7 @@ import { handlePlantTelemetry } from "@/lib/telemetry";
 import { WateringAlertStatus } from "@prisma/client";
 
 // TEST FIXTURE: remove this file once real telemetry/dev seeding is in place.
-const TEST_FIXTURE_USER_PHONE = "+15555550123"; // TEST VALUE: seeded dev user phone
+const DEFAULT_TEST_FIXTURE_USER_PHONE = "+14253943218"; // TEST VALUE: dev user phone (4253943218)
 const TEST_FIXTURE_USER_NAME = "Test Gardener"; // TEST VALUE: seeded dev user display name
 const TEST_FIXTURE_PASSWORD_HASH = "$2b$10$UXb0dqCzbWAatRF2Mfcf9OCwTMCQM/w0dLtHs3cnkbIOPUqpyjwvG"; // TEST VALUE: bcrypt for PlantBuddy!1
 
@@ -18,6 +18,7 @@ const TEST_FIXTURE_PLANT_NAME = "Fixture Fern (REMOVE)"; // TEST VALUE: dev plan
 
 let pendingProvision: Promise<void> | null = null;
 let telemetryInterval: NodeJS.Timeout | null = null;
+let fixtureOwnerPhone = DEFAULT_TEST_FIXTURE_USER_PHONE;
 
 export type TestFixtureDetails = {
   userPhone: string;
@@ -27,19 +28,22 @@ export type TestFixtureDetails = {
 };
 
 export const TEST_FIXTURE_DETAILS: TestFixtureDetails = {
-  userPhone: TEST_FIXTURE_USER_PHONE,
+  userPhone: DEFAULT_TEST_FIXTURE_USER_PHONE,
   password: "PlantBuddy!1",
   podId: TEST_FIXTURE_POD_ID,
   plantId: TEST_FIXTURE_PLANT_ID,
 };
 
-export async function ensureDevTestingPlantFixture() {
+export async function ensureDevTestingPlantFixture(ownerPhoneNumber?: string) {
   if (process.env.NODE_ENV === "production") {
     return;
   }
 
-  if (!pendingProvision) {
-    pendingProvision = provisionFixture().catch((error) => {
+  const targetPhone = ownerPhoneNumber ?? DEFAULT_TEST_FIXTURE_USER_PHONE;
+
+  if (!pendingProvision || fixtureOwnerPhone !== targetPhone) {
+    fixtureOwnerPhone = targetPhone;
+    pendingProvision = provisionFixture(targetPhone).catch((error) => {
       pendingProvision = null;
       console.error("Failed to provision test fixture", error);
     });
@@ -48,12 +52,12 @@ export async function ensureDevTestingPlantFixture() {
   await pendingProvision;
 }
 
-async function provisionFixture() {
+async function provisionFixture(ownerPhone: string) {
   await prisma.user.upsert({
-    where: { phoneNumber: TEST_FIXTURE_USER_PHONE },
+    where: { phoneNumber: ownerPhone },
     update: {},
     create: {
-      phoneNumber: TEST_FIXTURE_USER_PHONE,
+      phoneNumber: ownerPhone,
       passwordHash: TEST_FIXTURE_PASSWORD_HASH,
       name: TEST_FIXTURE_USER_NAME,
     },
@@ -75,14 +79,14 @@ async function provisionFixture() {
   await prisma.plants.upsert({
     where: { id: TEST_FIXTURE_PLANT_ID },
     update: {
-      ownerId: TEST_FIXTURE_USER_PHONE,
+      ownerId: ownerPhone,
       plantName: TEST_FIXTURE_PLANT_NAME,
       speciesName: TEST_FIXTURE_SPECIES_ID,
       podId: TEST_FIXTURE_POD_ID,
     },
     create: {
       id: TEST_FIXTURE_PLANT_ID,
-      ownerId: TEST_FIXTURE_USER_PHONE,
+      ownerId: ownerPhone,
       plantName: TEST_FIXTURE_PLANT_NAME,
       speciesName: TEST_FIXTURE_SPECIES_ID,
       podId: TEST_FIXTURE_POD_ID,

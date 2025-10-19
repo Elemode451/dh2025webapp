@@ -17,7 +17,7 @@ export async function GET(req: Request) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
-  await ensureDevTestingPlantFixture();
+  await ensureDevTestingPlantFixture(session.user.phoneNumber);
 
   const { searchParams } = new URL(req.url);
   const podId = searchParams.get("podId");
