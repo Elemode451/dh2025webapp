@@ -28,6 +28,8 @@ model Plants {
   species     PlantSpecies @relation(fields: [speciesName], references: [scientificName])
   speciesName String
   podId       String?
+  telemetry   PlantTelemetry[]
+  alerts      WateringAlert[]
 }
 
 model PlantSpecies {
@@ -40,6 +42,42 @@ model PlantSpecies {
   description       String?
   plants            Plants[]
   createdAt         DateTime @default(now())
+}
+
+model PlantTelemetry {
+  id              String         @id @default(uuid())
+  plant           Plants         @relation(fields: [plantId], references: [id])
+  plantId         String
+  type            TelemetryType
+  moisture        Float?
+  sensorTimestamp DateTime       @map("sensor_timestamp")
+  createdAt       DateTime       @default(now()) @map("created_at")
+}
+
+model WateringAlert {
+  id                      String                @id @default(uuid())
+  plant                   Plants                @relation(fields: [plantId], references: [id])
+  plantId                 String
+  status                  WateringAlertStatus   @default(PENDING)
+  triggeredAt             DateTime              @map("triggered_at")
+  fulfilledAt             DateTime?             @map("fulfilled_at")
+  fulfilledSensorTimestamp DateTime?            @map("fulfilled_sensor_timestamp")
+  createdAt               DateTime              @default(now()) @map("created_at")
+  updatedAt               DateTime              @default(now()) @updatedAt @map("updated_at")
+
+  @@index([plantId, status])
+  @@index([plantId, triggeredAt])
+}
+
+enum TelemetryType {
+  MOISTURE
+  WATERING
+}
+
+enum WateringAlertStatus {
+  PENDING
+  FULFILLED
+  MISSED
 }
 
 model FriendRequest {

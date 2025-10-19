@@ -15,6 +15,16 @@ export type PodSnapshot = {
   };
 };
 
+export type PodTelemetryUpdate = {
+  podId: string;
+  at?: number | null;
+  plant_info?: Record<string, PlantSensorSnapshot | undefined>;
+  global_info?: {
+    avgTempC?: number | null;
+    avgHumidity?: number | null;
+  };
+};
+
 const emitter = new EventEmitter();
 emitter.setMaxListeners(0);
 
@@ -54,29 +64,53 @@ export function syncPodSnapshot(podId: string, plantIds: string[]): PodSnapshot 
   return snapshot;
 }
 
-export function applyPodTelemetry(update: PodSnapshot) {
+export function applyPodTelemetry(update: PodTelemetryUpdate) {
+  const previous = pods.get(update.podId) ?? createEmptySnapshot(update.podId);
+
   const next: PodSnapshot = {
     podId: update.podId,
-    at: update.at ?? null,
-    plant_info: {},
-    global_info: {},
+    at: typeof update.at === "number" ? update.at : previous.at,
+    plant_info: { ...previous.plant_info },
+    global_info: { ...previous.global_info },
   };
 
-  for (const [plantId, reading] of Object.entries(update.plant_info ?? {})) {
-    if (reading && ("moisture" in reading || "lastWateredAt" in reading)) {
-      next.plant_info[plantId] = {
-        moisture: typeof reading.moisture === "number" ? reading.moisture : null,
-        lastWateredAt: typeof reading.lastWateredAt === "number" ? reading.lastWateredAt : null,
-      };
+  if (update.plant_info) {
+    for (const [plantId, reading] of Object.entries(update.plant_info)) {
+      if (!reading) {
+        continue;
+      }
+
+      const current = next.plant_info[plantId] ?? {};
+
+      if ("moisture" in reading) {
+        current.moisture =
+          typeof reading.moisture === "number" && !Number.isNaN(reading.moisture)
+            ? reading.moisture
+            : null;
+      }
+
+      if ("lastWateredAt" in reading) {
+        current.lastWateredAt =
+          typeof reading.lastWateredAt === "number" && !Number.isNaN(reading.lastWateredAt)
+            ? reading.lastWateredAt
+            : null;
+      }
+
+      next.plant_info[plantId] = current;
     }
   }
 
   if (update.global_info) {
-    if (typeof update.global_info.avgTempC === "number") {
-      next.global_info.avgTempC = update.global_info.avgTempC;
+    if ("avgTempC" in update.global_info) {
+      const temp = update.global_info.avgTempC;
+      next.global_info.avgTempC =
+        typeof temp === "number" && !Number.isNaN(temp) ? temp : null;
     }
-    if (typeof update.global_info.avgHumidity === "number") {
-      next.global_info.avgHumidity = update.global_info.avgHumidity;
+
+    if ("avgHumidity" in update.global_info) {
+      const humidity = update.global_info.avgHumidity;
+      next.global_info.avgHumidity =
+        typeof humidity === "number" && !Number.isNaN(humidity) ? humidity : null;
     }
   }
 

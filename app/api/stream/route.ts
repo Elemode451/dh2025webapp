@@ -3,6 +3,7 @@ import { NextResponse } from "next/server";
 import { auth } from "@/auth";
 import { prisma } from "@/lib/prisma";
 import { subscribeToPod, syncPodSnapshot, type PodSnapshot } from "@/lib/pod-state";
+import { ensureDevTestingPlantFixture } from "@/lib/test-fixture";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -15,6 +16,8 @@ export async function GET(req: Request) {
   if (!session?.user?.phoneNumber) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
+
+  await ensureDevTestingPlantFixture();
 
   const { searchParams } = new URL(req.url);
   const podId = searchParams.get("podId");

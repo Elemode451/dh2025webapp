@@ -24,7 +24,7 @@ export function Sidebar() {
   const pathname = usePathname();
 
   return (
-    <aside className="relative flex h-full w-[80px] flex-col items-center justify-between overflow-hidden bg-gradient-to-b from-[#111827] via-[var(--sidebar)] to-[#060606] py-8 text-white">
+    <aside className="relative flex min-h-[calc(100vh-3.5rem)] w-[80px] flex-col items-center justify-between overflow-hidden bg-gradient-to-b from-[#111827] via-[var(--sidebar)] to-[#060606] py-8 text-white">
       <div className="flex flex-col items-center gap-8">
         <nav className="flex flex-col items-center gap-4">
           {actions.map((item) => {
