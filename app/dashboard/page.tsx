@@ -30,6 +30,7 @@ export default async function DashboardPage() {
       scientificName: plant.species.scientificName,
       name: plant.species.name,
     },
+    podId: plant.podId,
   }));
 
   return (
