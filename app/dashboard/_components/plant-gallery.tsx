@@ -306,8 +306,11 @@ export function PlantGallery({ plants, userId }: PlantGalleryProps) {
     moisture?: number,
     lastWateredAt?: number,
   ) {
-    const moisturePercent = typeof moisture === "number" ? Math.round(Math.min(Math.max(moisture, 0), 1) * 100) : null;
-    const lastWateredLabel = formatLastWatered(lastWateredAt);
+    const hasMoisture = typeof moisture === "number" && !Number.isNaN(moisture);
+    const moisturePercent = hasMoisture
+      ? Math.round(Math.min(Math.max(moisture, 0), 1) * 100)
+      : null;
+    const lastWateredLabel = hasMoisture ? formatLastWatered(lastWateredAt) : null;
     const isSelected = selectedPlantIds.has(plant.id);
     const isSelectable = isSelectionMode;
 
@@ -351,7 +354,12 @@ export function PlantGallery({ plants, userId }: PlantGalleryProps) {
           </span>
         ) : null}
         <div className="relative flex h-[120px] w-[120px] items-center justify-center">
-          <span className="absolute inset-0 rounded-full opacity-90 transition-transform duration-200 group-hover:scale-[1.03]" style={getMoistureRingStyle(moisture)} />
+          {hasMoisture ? (
+            <span
+              className="absolute inset-0 rounded-full opacity-90 transition-transform duration-200 group-hover:scale-[1.03]"
+              style={getMoistureRingStyle(moisture)}
+            />
+          ) : null}
           <span className="relative flex h-[104px] w-[104px] items-center justify-center rounded-full bg-[var(--bg)] text-5xl">
             {plant.emoji ?? "🪴"}
           </span>
@@ -361,14 +369,14 @@ export function PlantGallery({ plants, userId }: PlantGalleryProps) {
           <p className="text-xs uppercase tracking-wide text-[var(--muted)]">{plant.species.name}</p>
           <p className="text-xs text-[var(--muted)]">{plant.species.scientificName}</p>
         </div>
-        <div className="space-y-0.5 text-xs text-[var(--muted)]">
-          {moisturePercent !== null ? (
-            <p className="font-medium text-[var(--ink)]">{moisturePercent}% moisture</p>
-          ) : (
-            <p>Moisture data unavailable</p>
-          )}
-          {lastWateredLabel ? <p>Last watered {lastWateredLabel}</p> : null}
-        </div>
+        {hasMoisture ? (
+          <div className="space-y-0.5 text-xs text-[var(--muted)]">
+            {moisturePercent !== null ? (
+              <p className="font-medium text-[var(--ink)]">{moisturePercent}% moisture</p>
+            ) : null}
+            {lastWateredLabel ? <p>Last watered {lastWateredLabel}</p> : null}
+          </div>
+        ) : null}
         {!isSelectable ? (
           <span className="text-xs font-medium text-[var(--accent)]/80 opacity-0 transition-opacity duration-200 group-hover:opacity-100">
             Tap to chat 🌟
@@ -455,32 +463,16 @@ export function PlantGallery({ plants, userId }: PlantGalleryProps) {
                 </div>
               </header>
               {(() => {
-                const plantCards = pod.plants
-                  .map((plant) => {
-                    const plantSnapshot = snapshot?.plant_info[plant.id];
-                    if (!plantSnapshot) {
-                      return null;
-                    }
-
-                    return renderPlantCard(
-                      plant,
-                      plantSnapshot.moisture,
-                      plantSnapshot.lastWateredAt,
-                    );
-                  })
-                  .filter((card): card is ReturnType<typeof renderPlantCard> => card !== null);
-
-                if (plantCards.length === 0) {
-                  return (
-                    <p className="rounded-[var(--card-radius)] border border-dashed border-[var(--border)] bg-white/70 p-6 text-center text-sm text-[var(--muted)]">
-                      No sensor data is currently available for the plants in this pod.
-                    </p>
-                  );
-                }
-
                 return (
                   <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-                    {plantCards}
+                    {pod.plants.map((plant) => {
+                      const plantSnapshot = snapshot?.plant_info[plant.id];
+                      return renderPlantCard(
+                        plant,
+                        plantSnapshot?.moisture,
+                        plantSnapshot?.lastWateredAt,
+                      );
+                    })}
                   </div>
                 );
               })()}
