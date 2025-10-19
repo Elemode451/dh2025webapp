@@ -452,15 +452,39 @@ export function PlantGallery({ plants, userId }: PlantGalleryProps) {
                   </span>
                 </div>
               </header>
-              <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-                {pod.plants.map((plant) => {
-                  const plantSnapshot = snapshot?.plant_info[plant.id];
-                  return renderPlantCard(plant, plantSnapshot?.moisture, plantSnapshot?.lastWateredAt);
-                })}
-              </div>
-            </section>
-          );
-        })}
+              {(() => {
+                const plantCards = pod.plants
+                  .map((plant) => {
+                    const plantSnapshot = snapshot?.plant_info[plant.id];
+                    if (!plantSnapshot) {
+                      return null;
+                    }
+
+                    return renderPlantCard(
+                      plant,
+                      plantSnapshot.moisture,
+                      plantSnapshot.lastWateredAt,
+                    );
+                  })
+                  .filter((card): card is ReturnType<typeof renderPlantCard> => card !== null);
+
+                if (plantCards.length === 0) {
+                  return (
+                    <p className="rounded-[var(--card-radius)] border border-dashed border-[var(--border)] bg-white/70 p-6 text-center text-sm text-[var(--muted)]">
+                      No sensor data is currently available for the plants in this pod.
+                    </p>
+                  );
+                }
+
+                return (
+                  <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+                    {plantCards}
+                  </div>
+                );
+              })()}
+        </section>
+      );
+    })}
 
         <div className="space-y-3">
           {ungrouped.length > 0 ? (
