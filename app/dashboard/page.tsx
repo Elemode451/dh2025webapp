@@ -2,6 +2,7 @@ import { auth } from '@/auth';
 import { redirect } from 'next/navigation';
 
 import { prisma } from '@/lib/prisma';
+import { ensureDevTestingPlantFixture } from '@/lib/test-fixture';
 
 import { PlantGallery, type Plant } from './_components/plant-gallery';
 
@@ -13,6 +14,8 @@ export default async function DashboardPage() {
   }
 
   const userId = session.user.phoneNumber;
+
+  await ensureDevTestingPlantFixture(userId);
 
   const plantsFromDb = await prisma.plants.findMany({
     where: { ownerId: userId },
