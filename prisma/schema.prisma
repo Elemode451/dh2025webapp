@@ -8,32 +8,55 @@ datasource db {
 }
 
 model User {
-  phoneNumber  String   @id
-  passwordHash String   @map("password_hash")
-  name         String?
-  plants       Plants[]
-  createdAt    DateTime @default(now()) @map("created_at")
-  updatedAt    DateTime @default(now()) @updatedAt @map("updated_at")
+  phoneNumber            String          @id
+  passwordHash           String          @map("password_hash")
+  name                   String?
+  plants                 Plants[]
+  friends                User[]          @relation("Friendship")
+  friendOf               User[]          @relation("Friendship")
+  friendRequestsSent     FriendRequest[] @relation("RequestSender")
+  friendRequestsReceived FriendRequest[] @relation("RequestReceiver")
+  createdAt              DateTime        @default(now()) @map("created_at")
+  updatedAt              DateTime        @default(now()) @updatedAt @map("updated_at")
 }
 
 model Plants {
-  id            String         @id @default(uuid())
-  owner         User           @relation(fields:[ownerId], references:[phoneNumber])
-  ownerId       String     
-  plantName     String
-  species       PlantSpecies   @relation(fields:[speciesName], references: [scientificName])
-  speciesName   String         
-  podId         String?
+  id          String       @id @default(uuid())
+  owner       User         @relation(fields: [ownerId], references: [phoneNumber])
+  ownerId     String
+  plantName   String
+  species     PlantSpecies @relation(fields: [speciesName], references: [scientificName])
+  speciesName String
+  podId       String?
 }
 
 model PlantSpecies {
-  scientificName     String   @id
-  name               String
-  idealLight         String?
-  idealTemp          String?
-  idealMoisture      String?
-  wateringFrequency  String?  // <-- how often to water
-  description        String?
-  plants             Plants[]
-  createdAt          DateTime @default(now())
+  scientificName    String   @id
+  name              String
+  idealLight        String?
+  idealTemp         String?
+  idealMoisture     String?
+  wateringFrequency String? // <-- how often to water
+  description       String?
+  plants            Plants[]
+  createdAt         DateTime @default(now())
+}
+
+model FriendRequest {
+  id          String              @id @default(uuid())
+  sender      User                @relation("RequestSender", fields: [senderId], references: [phoneNumber])
+  senderId    String
+  receiver    User                @relation("RequestReceiver", fields: [receiverId], references: [phoneNumber])
+  receiverId  String
+  status      FriendRequestStatus @default(PENDING)
+  createdAt   DateTime            @default(now())
+  respondedAt DateTime?
+
+  @@unique([senderId, receiverId])
+}
+
+enum FriendRequestStatus {
+  PENDING
+  ACCEPTED
+  DECLINED
 }

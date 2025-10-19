@@ -3,21 +3,19 @@ import { redirect } from 'next/navigation';
 
 import { prisma } from '@/lib/prisma';
 
-import { TopBar } from './_components/top-bar';
 import { PlantGallery, type Plant } from './_components/plant-gallery';
 
 export default async function DashboardPage() {
   const session = await auth();
 
-  if (!session?.user) {
+  if (!session?.user?.phoneNumber) {
     redirect('/login');
   }
 
-  const user = session.user!;
-  const username = user.name ?? 'friend';
+  const userId = session.user.phoneNumber;
 
   const plantsFromDb = await prisma.plants.findMany({
-    where: { ownerId: session.user.phoneNumber },
+    where: { ownerId: userId },
     include: { species: true },
     orderBy: { plantName: 'asc' },
   });
@@ -34,23 +32,15 @@ export default async function DashboardPage() {
   }));
 
   return (
-    <div className="min-h-screen bg-[var(--bg)] text-[var(--ink)]">
-      <TopBar username={username} />
+    <section className="space-y-6">
+      <header className="flex flex-col gap-1">
+        <h1 className="text-2xl font-semibold">Your plants</h1>
+        <p className="text-sm text-[var(--muted)]">
+          A quick peek at every leaf in your care...
+        </p>
+      </header>
 
-      <main className="bg-[var(--bg)] px-6 py-8">
-        <section className="mx-auto max-w-5xl">
-          <header className="mb-6 flex items-center justify-between">
-            <div>
-              <h1 className="text-2xl font-semibold">Your plants</h1>
-              <p className="text-sm text-[var(--muted)]">
-                A quick peek at every leaf in your care...
-              </p>
-            </div>
-          </header>
-
-          <PlantGallery plants={plants} userId={user.phoneNumber} />
-        </section>
-      </main>
-    </div>
+      <PlantGallery plants={plants} userId={userId} />
+    </section>
   );
 }
