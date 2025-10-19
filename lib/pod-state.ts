@@ -118,6 +118,7 @@ export function syncPodSnapshot(podId: string, plantIds: string[]): PodSnapshot 
     };
 
     pods.set(podId, snapshot);
+    emitter.emit(podId, snapshot);
     return snapshot;
   }
 
@@ -138,6 +139,7 @@ export function syncPodSnapshot(podId: string, plantIds: string[]): PodSnapshot 
   existing.at = now;
 
   pods.set(podId, existing);
+  emitter.emit(podId, existing);
   return existing;
 }
 

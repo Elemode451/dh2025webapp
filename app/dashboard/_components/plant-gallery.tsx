@@ -20,6 +20,7 @@ export type Plant = {
 
 type PlantGalleryProps = {
   plants: Plant[];
+  userId: string;
 };
 
 type PodGroup = {
@@ -159,10 +160,13 @@ function usePodSnapshots(podIds: string[]): PodSnapshots {
   return snapshots;
 }
 
-export function PlantGallery({ plants }: PlantGalleryProps) {
+export function PlantGallery({ plants, userId }: PlantGalleryProps) {
   const [activePlant, setActivePlant] = useState<Plant | null>(null);
   const [items, setItems] = useState<Plant[]>(plants);
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
+  const [isSelectionMode, setIsSelectionMode] = useState(false);
+  const [selectedPlantIds, setSelectedPlantIds] = useState<Set<string>>(new Set<string>());
+  const [isRegistering, setIsRegistering] = useState(false);
 
   useEffect(() => {
     setItems(plants);
@@ -199,17 +203,153 @@ export function PlantGallery({ plants }: PlantGalleryProps) {
     setItems((current) => [...current, plant]);
   }
 
-  function renderPlantCard(plant: Plant, moisture?: number, lastWateredAt?: number) {
+  function toggleSelection(plant: Plant) {
+    setSelectedPlantIds((current) => {
+      const next = new Set(current);
+      if (next.has(plant.id)) {
+        next.delete(plant.id);
+      } else {
+        next.add(plant.id);
+      }
+      return next;
+    });
+  }
+
+  async function handleConfirmSelection() {
+    if (isRegistering) {
+      return;
+    }
+
+    if (selectedPlantIds.size === 0) {
+      window.alert("Select at least one plant to register a pod.");
+      return;
+    }
+
+    const podIdInput = window.prompt("Enter the pod ID");
+
+    if (!podIdInput) {
+      return;
+    }
+
+    const podId = podIdInput.trim();
+
+    if (!podId) {
+      window.alert("Pod ID cannot be empty.");
+      return;
+    }
+
+    const plantIds = Array.from(selectedPlantIds);
+    const registration = {
+      pod_id: podId,
+      user_id: userId,
+      plant_ids: plantIds,
+    };
+
+    try {
+      await navigator.clipboard.writeText(JSON.stringify(registration, null, 2));
+      window.alert("Registration JSON copied to clipboard.");
+    } catch (error) {
+      console.error("Failed to copy pod registration", error);
+      window.alert("We couldn't copy the registration JSON to your clipboard.");
+    }
+
+    setIsRegistering(true);
+
+    try {
+      const response = await fetch("/api/pods", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        credentials: "include",
+        body: JSON.stringify({
+          podId,
+          plantIds,
+        }),
+      });
+
+      const data = (await response.json()) as {
+        podId?: string;
+        plants?: Plant[];
+        error?: string;
+      };
+
+      if (!response.ok) {
+        throw new Error(data.error ?? "Failed to register pod");
+      }
+
+      if (Array.isArray(data.plants)) {
+        setItems(data.plants);
+      }
+
+      window.alert("Pod registered successfully.");
+      setIsSelectionMode(false);
+      setSelectedPlantIds(new Set<string>());
+    } catch (error) {
+      console.error("Unable to register pod", error);
+      window.alert("We couldn't register that pod. Please try again.");
+    } finally {
+      setIsRegistering(false);
+    }
+  }
+
+  function cancelSelection() {
+    if (isRegistering) {
+      return;
+    }
+    setIsSelectionMode(false);
+    setSelectedPlantIds(new Set<string>());
+  }
+
+  function renderPlantCard(
+    plant: Plant,
+    moisture?: number,
+    lastWateredAt?: number,
+  ) {
     const moisturePercent = typeof moisture === "number" ? Math.round(Math.min(Math.max(moisture, 0), 1) * 100) : null;
     const lastWateredLabel = formatLastWatered(lastWateredAt);
+    const isSelected = selectedPlantIds.has(plant.id);
+    const isSelectable = isSelectionMode;
+
+    const cardClasses = [
+      "relative",
+      "group flex h-full flex-col items-center gap-4 rounded-[var(--card-radius)] bg-[var(--panel)] p-5 text-center shadow-[var(--shadow-card)] transition-all duration-200 ease-out",
+      "focus-visible:ring-2 focus-visible:ring-[var(--accent)] focus-visible:ring-offset-2 focus-visible:ring-offset-[var(--panel)]",
+    ];
+
+    if (isSelectable) {
+      cardClasses.push(
+        isSelected
+          ? "ring-2 ring-[var(--accent)] ring-offset-2 ring-offset-[var(--panel)] shadow-[var(--shadow-card-hover)]"
+          : "opacity-80 hover:opacity-100",
+      );
+    } else {
+      cardClasses.push("hover:translate-y-[1px] hover:shadow-[var(--shadow-card-hover)]");
+    }
 
     return (
       <button
         key={plant.id}
         type="button"
-        onClick={() => setActivePlant(plant)}
-        className="group flex h-full flex-col items-center gap-4 rounded-[var(--card-radius)] bg-[var(--panel)] p-5 text-center shadow-[var(--shadow-card)] transition-all duration-200 ease-out hover:translate-y-[1px] hover:shadow-[var(--shadow-card-hover)] focus-visible:ring-2 focus-visible:ring-[var(--accent)] focus-visible:ring-offset-2 focus-visible:ring-offset-[var(--panel)]"
+        onClick={() => {
+          if (isSelectionMode) {
+            toggleSelection(plant);
+            return;
+          }
+          setActivePlant(plant);
+        }}
+        className={cardClasses.join(" ")}
+        aria-pressed={isSelectable ? isSelected : undefined}
       >
+        {isSelectable ? (
+          <span
+            className={`absolute right-4 top-4 flex h-7 w-7 items-center justify-center rounded-full border text-sm font-semibold transition-colors ${
+              isSelected ? "border-[var(--accent)] bg-[var(--accent)]/90 text-white" : "border-[var(--muted)]/40 bg-white/80 text-[var(--muted)]"
+            }`}
+          >
+            {isSelected ? "✓" : ""}
+          </span>
+        ) : null}
         <div className="relative flex h-[120px] w-[120px] items-center justify-center">
           <span className="absolute inset-0 rounded-full opacity-90 transition-transform duration-200 group-hover:scale-[1.03]" style={getMoistureRingStyle(moisture)} />
           <span className="relative flex h-[104px] w-[104px] items-center justify-center rounded-full bg-[var(--bg)] text-5xl">
@@ -229,15 +369,53 @@ export function PlantGallery({ plants }: PlantGalleryProps) {
           )}
           {lastWateredLabel ? <p>Last watered {lastWateredLabel}</p> : null}
         </div>
-        <span className="text-xs font-medium text-[var(--accent)]/80 opacity-0 transition-opacity duration-200 group-hover:opacity-100">
-          Tap to chat 🌟
-        </span>
+        {!isSelectable ? (
+          <span className="text-xs font-medium text-[var(--accent)]/80 opacity-0 transition-opacity duration-200 group-hover:opacity-100">
+            Tap to chat 🌟
+          </span>
+        ) : null}
       </button>
     );
   }
 
   return (
     <>
+      <div className="mb-6 flex flex-wrap items-center justify-between gap-4">
+        <div className="space-y-1">
+          <h2 className="text-lg font-semibold text-[var(--ink)]">Organize your pods</h2>
+          <p className="text-sm text-[var(--muted)]">
+            {isSelectionMode ? "Click plants to add them to your new pod, then confirm." : "Group plants into pods to stream their telemetry together."}
+          </p>
+        </div>
+        <div className="flex items-center gap-3">
+          {isSelectionMode ? (
+            <button
+              type="button"
+              onClick={cancelSelection}
+              disabled={isRegistering}
+              className="rounded-full border border-[var(--border)] bg-white px-4 py-2 text-sm font-semibold text-[var(--ink)] shadow-sm transition-colors duration-200 hover:bg-white/80 disabled:cursor-not-allowed disabled:opacity-60"
+            >
+              Cancel
+            </button>
+          ) : null}
+          <button
+            type="button"
+            onClick={() => {
+              if (isSelectionMode) {
+                handleConfirmSelection();
+              } else {
+                setIsSelectionMode(true);
+                setSelectedPlantIds(new Set<string>());
+              }
+            }}
+            disabled={isRegistering}
+            className="inline-flex items-center gap-2 rounded-full bg-[var(--ink)] px-5 py-2 text-sm font-semibold text-white shadow-lg transition-colors duration-200 hover:bg-black disabled:cursor-not-allowed disabled:opacity-70"
+          >
+            {isSelectionMode ? (isRegistering ? "Registering..." : "Confirm selection") : "Register pod"}
+          </button>
+        </div>
+      </div>
+
       <div className="space-y-6">
         {pods.map((pod, index) => {
           const snapshot = snapshots[pod.id];
