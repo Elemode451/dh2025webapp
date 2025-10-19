@@ -419,9 +419,11 @@ export function PlantGallery({ plants, userId }: PlantGalleryProps) {
       <div className="space-y-6">
         {pods.map((pod, index) => {
           const snapshot = snapshots[pod.id];
-          const humidity = snapshot ? Math.round(snapshot.global_info.avgHumidity * 100) : null;
-          const temperature = snapshot ? snapshot.global_info.avgTempC.toFixed(1) : null;
-          const updatedAt = snapshot
+          const humidityValue = snapshot?.global_info.avgHumidity;
+          const humidity = typeof humidityValue === "number" ? Math.round(humidityValue * 100) : null;
+          const temperatureValue = snapshot?.global_info.avgTempC;
+          const temperature = typeof temperatureValue === "number" ? temperatureValue.toFixed(1) : null;
+          const updatedAt = typeof snapshot?.at === "number"
             ? (() => {
                 const date = new Date(snapshot.at * 1000);
                 try {
