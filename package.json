@@ -11,6 +11,7 @@
   "dependencies": {
     "@google/generative-ai": "^0.24.1",
     "@prisma/client": "^6.17.1",
+    "@vonage/server-sdk": "^3.25.1",
     "bcryptjs": "^3.0.2",
     "next": "15.5.6",
     "next-auth": "^5.0.0-beta.29",
