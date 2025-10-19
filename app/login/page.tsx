@@ -16,18 +16,18 @@ export default function LoginPage() {
     setError('');
 
     const formData = new FormData(event.currentTarget);
-    const email = formData.get('email') as string;
+    const phoneNumber = formData.get('phoneNumber') as string;
     const password = formData.get('password') as string;
 
     try {
       const result = await signIn('credentials', {
-        email,
+        phoneNumber,
         password,
         redirect: false,
       });
 
       if (result?.error) {
-        setError('Invalid email or password');
+        setError('Invalid phone number or password');
       } else {
         router.push('/dashboard');
         router.refresh();
@@ -50,17 +50,17 @@ export default function LoginPage() {
         <form className="mt-8 space-y-6" onSubmit={handleSubmit}>
           <div className="rounded-md shadow-sm -space-y-px">
             <div>
-              <label htmlFor="email" className="sr-only">
-                Email address
+              <label htmlFor="phoneNumber" className="sr-only">
+                Phone number
               </label>
               <input
-                id="email"
-                name="email"
-                type="email"
-                autoComplete="email"
+                id="phoneNumber"
+                name="phoneNumber"
+                type="tel"
+                autoComplete="tel"
                 required
                 className="appearance-none rounded-none relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-t-md focus:outline-none focus:ring-blue-500 focus:border-blue-500 focus:z-10 sm:text-sm"
-                placeholder="Email address"
+                placeholder="Phone number (e.g., +1234567890)"
               />
             </div>
             <div>

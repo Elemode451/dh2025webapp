@@ -1,0 +1,39 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  phoneNumber  String   @id
+  passwordHash String   @map("password_hash")
+  name         String?
+  plants       Plants[]
+  createdAt    DateTime @default(now()) @map("created_at")
+  updatedAt    DateTime @default(now()) @updatedAt @map("updated_at")
+}
+
+model Plants {
+  id            String         @id @default(uuid())
+  owner         User           @relation(fields:[ownerId], references:[phoneNumber])
+  ownerId       String     
+  plantName     String
+  species       PlantSpecies   @relation(fields:[speciesName], references: [scientificName])
+  speciesName   String         
+  podId         String?
+}
+
+model PlantSpecies {
+  scientificName     String   @id
+  name               String
+  idealLight         String?
+  idealTemp          String?
+  idealMoisture      String?
+  wateringFrequency  String?  // <-- how often to water
+  description        String?
+  plants             Plants[]
+  createdAt          DateTime @default(now())
+}

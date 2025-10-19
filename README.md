@@ -23,56 +23,33 @@ A Next.js application with email/password authentication using NextAuth v5 (Auth
 npm install
 ```
 
-### 2. Set Up Vercel Postgres
+### 2. Set Up Prisma Database
 
-1. Go to [Vercel Dashboard](https://vercel.com/dashboard)
-2. Create a new Postgres database or use an existing one
-3. Navigate to the database settings and copy all the environment variables
-4. Paste them into your `.env.local` file
+1. Get your Prisma database connection URL (you already have one configured)
+2. Your `.env.local` should have `DATABASE_URL` set
 
 ### 3. Configure Environment Variables
 
-Update `.env.local` with your values:
+Your `.env.local` should look like this:
 
 ```env
-# Database - Get these from Vercel Postgres dashboard
-POSTGRES_URL="your-postgres-url"
-POSTGRES_PRISMA_URL="your-prisma-url"
-POSTGRES_URL_NO_SSL="your-no-ssl-url"
-POSTGRES_URL_NON_POOLING="your-non-pooling-url"
-POSTGRES_USER="your-user"
-POSTGRES_HOST="your-host"
-POSTGRES_PASSWORD="your-password"
-POSTGRES_DATABASE="your-database"
+# Database - Prisma connection URL
+DATABASE_URL="your-database-url"
 
 # NextAuth
-NEXTAUTH_SECRET="your-secret-here"  # Generate with: openssl rand -base64 32
+NEXTAUTH_SECRET="A7b/tmeW85J61CjGEfZrpVO5aCaL7/KVLju/Uh/jU14="
 NEXTAUTH_URL="http://localhost:3000"
 ```
 
-To generate a secure `NEXTAUTH_SECRET`:
+### 4. Push Database Schema
+
+Use Prisma to sync your database schema:
+
 ```bash
-openssl rand -base64 32
+npx dotenv -e .env.local -- prisma db push
 ```
 
-### 4. Create Database Tables
-
-You need to run the SQL schema to create the users table. You can do this in two ways:
-
-**Option A: Using Vercel Dashboard**
-1. Go to your Vercel Postgres database
-2. Click on the "Query" tab
-3. Copy the contents of `schema.sql` and run it
-
-**Option B: Using Vercel CLI**
-```bash
-npm i -g vercel
-vercel login
-vercel link
-vercel env pull .env.local
-```
-
-Then create a script to run the schema or use the Vercel dashboard.
+This will create the `users` table in your database.
 
 ### 5. Run Development Server
 
@@ -169,7 +146,7 @@ Handled by NextAuth - use the `signOut()` function from `next-auth/react`.
 - **Language**: TypeScript
 - **Styling**: Tailwind CSS
 - **Authentication**: NextAuth v5 (Auth.js)
-- **Database**: Vercel Postgres
+- **Database**: Prisma ORM with PostgreSQL
 - **Password Hashing**: bcryptjs
 - **Validation**: Zod
 

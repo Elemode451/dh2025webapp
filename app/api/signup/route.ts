@@ -1,10 +1,10 @@
 import { NextResponse } from 'next/server';
-import { sql } from '@vercel/postgres';
+import { prisma } from '@/lib/prisma';
 import bcrypt from 'bcryptjs';
 import { z } from 'zod';
 
 const signupSchema = z.object({
-  email: z.string().email(),
+  phoneNumber: z.string().min(10).regex(/^\+?[1-9]\d{1,14}$/, 'Invalid phone number format'),
   password: z.string().min(6),
   name: z.string().min(1).optional(),
 });
@@ -21,14 +21,14 @@ export async function POST(request: Request) {
       );
     }
 
-    const { email, password, name } = validation.data;
+    const { phoneNumber, password, name } = validation.data;
 
     // Check if user already exists
-    const existingUser = await sql`
-      SELECT id FROM users WHERE email = ${email}
-    `;
+    const existingUser = await prisma.user.findUnique({
+      where: { phoneNumber },
+    });
 
-    if (existingUser.rows.length > 0) {
+    if (existingUser) {
       return NextResponse.json(
         { error: 'User already exists' },
         { status: 409 }
@@ -39,16 +39,23 @@ export async function POST(request: Request) {
     const passwordHash = await bcrypt.hash(password, 10);
 
     // Create user
-    const result = await sql`
-      INSERT INTO users (email, password_hash, name)
-      VALUES (${email}, ${passwordHash}, ${name || null})
-      RETURNING id, email, name, created_at
-    `;
+    const user = await prisma.user.create({
+      data: {
+        phoneNumber,
+        passwordHash,
+        name: name || null,
+      },
+      select: {
+        phoneNumber: true,
+        name: true,
+        createdAt: true,
+      },
+    });
 
     return NextResponse.json(
       {
         message: 'User created successfully',
-        user: result.rows[0]
+        user,
       },
       { status: 201 }
     );

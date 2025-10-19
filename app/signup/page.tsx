@@ -15,7 +15,7 @@ export default function SignupPage() {
     setError('');
 
     const formData = new FormData(event.currentTarget);
-    const email = formData.get('email') as string;
+    const phoneNumber = formData.get('phoneNumber') as string;
     const password = formData.get('password') as string;
     const name = formData.get('name') as string;
 
@@ -23,7 +23,7 @@ export default function SignupPage() {
       const response = await fetch('/api/signup', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email, password, name }),
+        body: JSON.stringify({ phoneNumber, password, name }),
       });
 
       const data = await response.json();
@@ -64,17 +64,18 @@ export default function SignupPage() {
               />
             </div>
             <div>
-              <label htmlFor="email" className="sr-only">
-                Email address
+              <label htmlFor="phoneNumber" className="sr-only">
+                Phone number
               </label>
               <input
-                id="email"
-                name="email"
-                type="email"
-                autoComplete="email"
+                id="phoneNumber"
+                name="phoneNumber"
+                type="tel"
+                autoComplete="tel"
                 required
+                minLength={10}
                 className="appearance-none rounded relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 focus:outline-none focus:ring-blue-500 focus:border-blue-500 focus:z-10 sm:text-sm"
-                placeholder="Email address"
+                placeholder="Phone number (e.g., +1234567890)"
               />
             </div>
             <div>

@@ -35,14 +35,14 @@ export default async function DashboardPage() {
         <div className="px-4 py-6 sm:px-0">
           <div className="border-4 border-dashed border-gray-200 rounded-lg p-8">
             <h2 className="text-2xl font-bold text-gray-900 mb-4">
-              Welcome, {session.user.name || session.user.email}!
+              Welcome, {session.user.name || 'User'}!
             </h2>
             <div className="bg-white shadow rounded-lg p-6">
               <h3 className="text-lg font-medium text-gray-900 mb-2">User Information</h3>
               <dl className="space-y-2">
                 <div>
-                  <dt className="text-sm font-medium text-gray-500">Email</dt>
-                  <dd className="text-sm text-gray-900">{session.user.email}</dd>
+                  <dt className="text-sm font-medium text-gray-500">Phone Number</dt>
+                  <dd className="text-sm text-gray-900">{(session.user as any).phoneNumber || session.user.id}</dd>
                 </div>
                 {session.user.name && (
                   <div>
@@ -50,10 +50,6 @@ export default async function DashboardPage() {
                     <dd className="text-sm text-gray-900">{session.user.name}</dd>
                   </div>
                 )}
-                <div>
-                  <dt className="text-sm font-medium text-gray-500">User ID</dt>
-                  <dd className="text-sm text-gray-900">{session.user.id}</dd>
-                </div>
               </dl>
             </div>
             <div className="mt-6">

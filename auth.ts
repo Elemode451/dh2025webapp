@@ -1,14 +1,16 @@
 import NextAuth from 'next-auth';
 import Credentials from 'next-auth/providers/credentials';
 import { authConfig } from './auth.config';
-import { sql } from '@vercel/postgres';
+import { prisma } from '@/lib/prisma';
 import bcrypt from 'bcryptjs';
 import { z } from 'zod';
 
-async function getUser(email: string) {
+async function getUser(phoneNumber: string) {
   try {
-    const user = await sql`SELECT * FROM users WHERE email=${email}`;
-    return user.rows[0];
+    const user = await prisma.user.findUnique({
+      where: { phoneNumber },
+    });
+    return user;
   } catch (error) {
     console.error('Failed to fetch user:', error);
     throw new Error('Failed to fetch user.');
@@ -21,21 +23,21 @@ export const { auth, signIn, signOut, handlers } = NextAuth({
     Credentials({
       async authorize(credentials) {
         const parsedCredentials = z
-          .object({ email: z.string().email(), password: z.string().min(6) })
+          .object({ phoneNumber: z.string().min(10), password: z.string().min(6) })
           .safeParse(credentials);
 
         if (parsedCredentials.success) {
-          const { email, password } = parsedCredentials.data;
-          const user = await getUser(email);
+          const { phoneNumber, password } = parsedCredentials.data;
+          const user = await getUser(phoneNumber);
           if (!user) return null;
 
-          const passwordsMatch = await bcrypt.compare(password, user.password_hash);
+          const passwordsMatch = await bcrypt.compare(password, user.passwordHash);
 
           if (passwordsMatch) {
             return {
-              id: user.id.toString(),
-              email: user.email,
+              id: user.phoneNumber,
               name: user.name,
+              phoneNumber: user.phoneNumber,
             };
           }
         }
@@ -45,4 +47,22 @@ export const { auth, signIn, signOut, handlers } = NextAuth({
       },
     }),
   ],
+  callbacks: {
+    async jwt({ token, user }) {
+      if (user) {
+        token.id = user.id;
+        token.phoneNumber = user.phoneNumber;
+        token.name = user.name;
+      }
+      return token;
+    },
+    async session({ session, token }) {
+      if (token) {
+        session.user.id = token.id as string;
+        session.user.phoneNumber = token.phoneNumber as string;
+        session.user.name = token.name as string;
+      }
+      return session;
+    },
+  },
 });
